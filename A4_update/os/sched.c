@@ -24,7 +24,7 @@ static struct proc *fetch_task() {
 void add_task(struct proc *p) {
     assert(p->state == RUNNABLE);
     assert(holding(&p->lock));
-    
+
     push_queue(&task_queue, p);
     debugf("add task (pid=%d) to task queue", p->pid);
 }
@@ -81,26 +81,6 @@ void scheduler() {
         assert(p->state == RUNNABLE);
         debugf("switch to proc %d(%d)", p->index, p->pid);
         p->state = RUNNING;
-        
-        // Assignment 4: Calculate wait time and reset run time counter
-        uint64 current_time = ticks;
-        
-        // If process has been running before
-        if (p->last_run_time > 0) {
-            // Add the waiting time since it was last in the queue
-            p->total_wait_time += (current_time - p->last_run_time);
-        }
-        
-        // Update last run time to now
-        p->last_run_time = current_time;
-        
-        // If time_slice is depleted, reset it based on priority
-        if (p->time_slice <= 0) {
-            // Priority 0 gets full quantum, priority 9 gets 1 time unit
-            p->time_slice = FULL_QUANTUM - (p->priority * 2);
-            if (p->time_slice < 1) p->time_slice = 1; // At least 1 time unit
-        }
-        
         c->proc  = p;
         swtch(&c->sched_context, &p->context);
 
@@ -154,23 +134,9 @@ void yield() {
     debugf("yield: (%d)%p", p->pid, p);
 
     acquire(&p->lock);
-    
-    // Assignment 4: Implement time slice
-    p->time_slice--;
-    if (p->time_slice <= 0) {
-        // Time slice depleted, actually yield the processor
-        p->state = RUNNABLE;
-        
-        // Assignment 4: Update run time statistics
-        uint64 current_time = ticks;
-        p->total_run_time += (current_time - p->last_run_time);
-        p->last_run_time = current_time;
-        
-        sched();
-    } else {
-        // If time_slice > 0, continue running
-        release(&p->lock);
-    }
+    p->state = RUNNABLE;
+    sched();
+    release(&p->lock);
 }
 
 /**
@@ -183,16 +149,6 @@ void setpriority(int priority) {
         return;
 
     // TODO:
-    acquire(&p->lock);
-    p->priority = priority;
     
-    // Recalculate time_slice based on new priority
-    // Reset it only if we're currently depleted
-    if (p->time_slice <= 0) {
-        p->time_slice = FULL_QUANTUM - (priority * 2);
-        if (p->time_slice < 1) p->time_slice = 1; // At least 1 time unit
-    }
-    
-    release(&p->lock);
-    return;
+    return ;
 }

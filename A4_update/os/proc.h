@@ -63,14 +63,6 @@ struct proc {
     struct trapframe *__kva trapframe;  // data page for trampoline.S
     uint64 __kva kstack;                // Virtual address of kernel stack
     struct context context;             // swtch() here to run process
-    
-    // Assignment 4 fields
-    int priority;                // Process priority (0-9, 0 is highest)
-    int time_slice;              // Current remaining time slice
-    uint64 creation_time;        // When the process was created
-    uint64 last_run_time;        // When the process was last scheduled
-    uint64 total_run_time;       // Total accumulated run time
-    uint64 total_wait_time;      // Total accumulated wait time
 };
 
 static inline int cpuid() {

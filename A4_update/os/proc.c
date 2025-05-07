@@ -97,14 +97,6 @@ found:
     p->pid        = allocpid();
     p->state      = USED;
 
-    // Assignment 4: Initialize time_slice and priority
-    p->priority = 5;  // Default middle priority
-    p->time_slice = FULL_QUANTUM;
-    p->creation_time = ticks;
-    p->last_run_time = 0;  // Will be set when first scheduled
-    p->total_run_time = 0;
-    p->total_wait_time = 0;
-
     // fork or exec(load_user_elf) will initialize these:
     p->mm      = NULL;
     p->vma_brk = NULL;
@@ -200,10 +192,6 @@ int fork() {
 
     struct proc *p = curr_proc();
     acquire(&p->lock);
-    
-    // Copy priority from parent to child
-    np->priority = p->priority;
-    
     acquire(&p->mm->lock);
 
     // Copy user memory from parent to child.
@@ -321,18 +309,6 @@ void exit(int code) {
     if (p == init_proc) {
         panic("init process exited");
     }
-
-    // Assignment 4: Calculate and print scheduling statistics
-    // Update run time one last time
-    uint64 current_time = ticks;
-    if (p->last_run_time > 0) {
-        p->total_run_time += (current_time - p->last_run_time);
-    }
-    
-    uint64 turnaround_time = current_time - p->creation_time;
-    
-    printf("[PID %d] Exit: priority=%d, turnaround_time=%d, running_time=%d, waiting_time=%d\n", 
-           p->pid, p->priority, turnaround_time, p->total_run_time, p->total_wait_time);
 
     acquire(&wait_lock);
 
